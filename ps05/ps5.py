@@ -264,12 +264,12 @@ def gen_cities_avg(climate, multi_cities, years):
     # TODO
     clim_data = []
 
-    for year in TRAINING_INTERVAL:
-        for city in CITIES:
-            yearly_averages = []
+    for year in years:
+        yearly_averages = []
+        for city in multi_cities:
             # daily_temps every days temp for a year
             #
-            daily_temps = climate_data.get_yearly_temp(city, year)
+            daily_temps = climate.get_yearly_temp(city, year)
             city_yearly_avg = numpy.average(daily_temps)
             yearly_averages.append(city_yearly_avg)
         year_avg = numpy.average(yearly_averages)
@@ -294,13 +294,26 @@ def moving_average(y, window_length):
         an 1-d pylab array with the same length as y storing moving average of
         y-coordinates of the N sample points
     """
-    # TODO
-    pass
+    moving_avg = [0] * len(y)
+
+    for index, value in enumerate(y):
+        divisor = 0
+        for back_index in range(window_length):
+            if (index - back_index) >= 0:
+                moving_avg[index] = moving_avg[index] + y[index - back_index]
+                divisor += 1
+        moving_avg[index] = moving_avg[index] / divisor
+
+    return pylab.array(moving_avg)
+
+#y = pylab.array([10, 20, 30, 40, 50])
+#window_length = 3
+#print(moving_average(y, window_length))
+
 
 def rmse(y, estimated):
     """
     Calculate the root mean square error term.
-
     Args:
         y: an 1-d pylab array with length N, representing the y-coordinates of
             the N sample points
@@ -310,8 +323,18 @@ def rmse(y, estimated):
     Returns:
         a float for the root mean square error term
     """
-    # TODO
-    pass
+    # complex
+    #
+    #sum_sq = 0
+    #for y_i, e_i in zip(y, estimated):
+    #    sum_sq += (y_i - e_i)**2
+
+    # better
+    #
+    sum_sq = sum((y-estimated)**2)
+
+    return numpy.sqrt(sum_sq / len(y))
+
 
 def gen_std_devs(climate, multi_cities, years):
     """
@@ -328,8 +351,34 @@ def gen_std_devs(climate, multi_cities, years):
         this array corresponds to the standard deviation of the average annual 
         city temperatures for the given cities in a given year.
     """
-    # TODO
-    pass
+    variance = numpy.array([])
+
+    for year in years:
+        # a hacky way to deal with leap years
+        #
+        days_in_year = climate.get_yearly_temp(multi_cities[0], year).shape[0]
+        daily_temps_for_cities = numpy.zeros(shape=(len(multi_cities),
+                                                    days_in_year))
+        for i, city in enumerate(multi_cities):
+            # daily_temps every days temp for a year
+            #
+            daily_temps = climate.get_yearly_temp(city, year)
+            daily_temps_for_cities[i] = daily_temps
+        daily_average = numpy.mean(daily_temps_for_cities, axis = 0)
+        years_mean = numpy.mean(daily_average)
+
+        years_var = numpy.sum((daily_average - years_mean)**2)\
+                    / daily_average.shape
+        variance = numpy.append(variance, years_var)
+
+    return numpy.sqrt(variance)
+
+
+#climate = Climate('data.csv')
+#years = pylab.array(TRAINING_INTERVAL)
+#years = pylab.array([1961, 1962])
+#print(gen_std_devs(climate, ['SEATTLE', 'TAMPA'], years))
+
 
 def evaluate_models_on_testing(x, y, models):
     """
@@ -355,17 +404,24 @@ def evaluate_models_on_testing(x, y, models):
     Returns:
         None
     """
-    # TODO
-    pass
+    for model in models:
+        modeldata = pylab.polyval(model, x)
+
+        pylab.plot(x, y, 'bo', label='Historical Data')
+        pylab.plot(x, modeldata, 'r-', label='Prediction')
+        pylab.xlabel('Year')
+        pylab.ticklabel_format(useOffset=False)
+        pylab.ylabel('Temp')
+
+        pylab.show()
 
 if __name__ == '__main__':
 
-    pass 
-
+    pass
+'''
     # Part A.4
     # jan 10th every year
     FILENAME = 'data.csv'
-
     climate_data = Climate(FILENAME)
     years = []
     clim_data = []
@@ -389,8 +445,7 @@ if __name__ == '__main__':
     years = pylab.array(TRAINING_INTERVAL)
     models = generate_models(years, city_avg, [1])
 
-    evaluate_models_on_training(years, city_avg, models)
-
+    evaluate_models_on_training(years, city_avg, models)'''
 
     # Part C
     # TODO: replace this line with your code
@@ -399,4 +454,4 @@ if __name__ == '__main__':
     # TODO: replace this line with your code
 
     # Part E
-    # TODO: replace this line with your code
+''''''
